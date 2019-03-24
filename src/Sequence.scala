@@ -1,44 +1,36 @@
-/* Partitions de bas niveau : instructions pour le périphérique MIDI */
-
+/* Partitions de bas niveau : ce sont des instructions pour le periphérique MIDI*/
 
 import Midi._
 import Action._
 
 package object Sequence {
 
-  /* Une séquence est une liste d'actions associées à une date. */
+  type sequence = Stream[Instruction]
 
-  type evenement = (action, date)
-
-  type sequence = List[evenement]
-
-  val translate: date => sequence => sequence = delta => s =>
-    s match {
-      case Nil => Nil
-      case (e, d) :: r => (e, d + delta) :: (translate(delta)(r))
-    }
-
-  /* Améliorer translate en utilisant un map. */
-
-
-  val get_date = () => System.currentTimeMillis()
-
-  val play_absolu: Audio => sequence => Unit = out => p =>
+  val play: Audio => sequence => Unit = out => p =>
     p match {
-      case Nil => ()
-      case (e, d) :: r =>
-        if (d < get_date()) {
-          perform_action(out)(e)
-          play_absolu(out)(r)
-        }
-        else {
-          Thread.sleep(10)
-          play_absolu(out)(p)
-        }
+      case Stream.Empty => ()
+      case e #:: r => {
+        perform_action(out)(e)
+        play(out)(r)
+      }
     }
 
+  /*
+  type sequence_finie = List[Instruction]
 
-  val play_relatif: Audio => sequence => Unit = out => p =>
-    play_absolu(out)(translate(get_date())(p))
+  val play_sequence_finie : Audio => sequence_finie => Unit = out => p =>
+    p match {
 
+      case Nil => ()
+
+      case e :: r => {
+        perform_action (out) (e)
+        play_sequence_finie (out) (r)
+      }
+    }
+
+  val play_debut = (nb_events:Int) => (out:Audio) => (s:sequence) =>
+    play_sequence_finie (out)  ((s.take (nb_events)).toList)
+    */
 }

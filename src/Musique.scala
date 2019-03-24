@@ -1,32 +1,65 @@
 import Action._
+import MesPartitions._
 import Midi._
-import Partition.{Noire, _}
+import Partition._
 import Sequence._
-import ancien.Musique.{Croche, Duree, Noire, sortie}
 
 object Musique {
-  val sortie = new Audio();
-
-
-
-
+  val sortie = new Audio()
 
   /**
-    * Transforme une partition en sequence
-    *
+    * Ajoute n en hauteur
     */
-  val sequence_of_partition: Instrument => date => partition => sequence = i => d => p =>
-    p match {
+  val transpose: Int => partition => partition = n => s =>
+    s match {
       case Nil => Nil
-      case Silence :: r => sequence_of_partition(i)(d + 200)(r)
-      case Note(Noire, h) :: r => ((i, h, On), d) :: ((i, h, Off), d + 400) :: sequence_of_partition(i)(d + 400)(r)
-      case Note(Croche, h) :: r => ((i, h, On), d) :: ((i, h, Off), d + 200) :: sequence_of_partition(i)(d + 200)(r)
+      case Note(a, h) :: r => Note(a, h + n) :: transpose(n)(r)
+      case Silence :: r => Silence :: transpose(n)(r)
     }
 
+  /**
+    * Transforme les segments en sequences.
+    */
+  val seg_to_seq : Instrument => Int => segment => sequence = inst => tempo => seg => {
+    seg match {
+      case Nil                  => Stream.Empty
+      case Silence::t           => Wait(tempo) #:: seg_to_seq(inst)(tempo)(t)
+      case Note(Croche, h):: t  => Event(inst, h, On) #:: Wait(tempo) #:: Event(inst, h, Off) #:: seg_to_seq(inst)(tempo)(t)
+      case Note(Noire, h)::t    => Event(inst, h, On) #:: Wait(tempo * 2) #:: Event(inst, h, Off) #:: seg_to_seq(inst)(tempo)(t)
+    }
+  }
+
+  /**
+    * Transforme les partitions en sequences
+    */
+  val part_to_seq: Instrument => Int => partition => sequence = inst => tempo => part => {
+    part match {
+      case Nil             => Stream.Empty
+      case (Nb(l), seg)::t => seg_to_seq(inst)(tempo)(seg) #::: part_to_seq(inst)(tempo)(t)
+      case (Nb(n), seg)::t => seg_to_seq(inst)(tempo)(seg) #::: part_to_seq(inst)(tempo)((Nb(n-1), seg)::t)
+      case (AdLib, seg)::t => seg_to_seq(inst)(tempo)(seg) #::: part_to_seq(inst)(tempo)((AdLib, seg)::t)
+
+    }
+  }
+
+  /**
+    * Combine deux sequences en une seule.
+    * s1 :
+    * s2 :
+    */
+  val combine_seq: sequence => sequence => sequence = s1 => s2 => {
+    (s1,s2) match {
+      case (Wait(n1)#::t1, Wait(n2)#::t2) if n1 > n2 => Wait(n2) #:: combine_seq(Wait(n1 - n2)#::t1)(t2)
+      case (Wait(n1)#::t1, Wait(n2)#::t2) if n1 < n2 => Wait(n1) #:: combine_seq(t1)(Wait(n2 - n1)#::t2)
+      case (Wait(n1)#::t1, Wait(n2)#::t2)            => Wait(n1) #:: combine_seq(t1)(t2)
+      case (Event(i, h, s)#::t1, _#::t2)             => Event(i, h, s) #:: combine_seq(t1)(s2)
+      case (_#::t1, Event(i, h, s)#::t2)             => Event(i, h, s) #:: combine_seq(s1)(t2)
+      case (_, Stream.Empty)                         => s1
+      case (Stream.Empty, _)                         => s2
+    }
+  }
+
   def main(args: Array[String]): Unit = {
-    val mapartition: partition = Note(Croche, 70) :: Silence :: Note(Croche, 70) :: Silence :: Note(Croche, 77) :: Silence :: Note(Croche, 77) :: Silence :: Note(Croche, 79) :: Silence :: Note(Croche, 79) :: Silence :: Note(Noire, 77) :: Nil
-    val masequence = sequence_of_partition(Tubular)(0)(mapartition)
-    play_relatif(sortie)(masequence)
+    play(sortie)(seg_to_seq(Tubular)(100)(monsegment))
   }
 }
-
