@@ -8,16 +8,6 @@ object Musique {
   val sortie = new Audio()
 
   /**
-    * Ajoute n en hauteur
-    */
-  val transpose: Int => partition => partition = n => s =>
-    s match {
-      case Nil => Nil
-      case Note(a, h) :: r => Note(a, h + n) :: transpose(n)(r)
-      case Silence :: r => Silence :: transpose(n)(r)
-    }
-
-  /**
     * Transforme les segments en sequences.
     */
   val seg_to_seq : Instrument => Int => segment => sequence = inst => tempo => seg => {
@@ -60,6 +50,8 @@ object Musique {
   }
 
   def main(args: Array[String]): Unit = {
-    play(sortie)(seg_to_seq(Tubular)(100)(monsegment))
+    //play(sortie)(seg_to_seq(Tubular)(100)(monsegment))
+    perform_action(sortie)(Event(Piano,70,On))
+    play(sortie)(part_to_seq(Piano)(100)(partitionRepeatFast))
   }
 }

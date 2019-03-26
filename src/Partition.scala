@@ -11,7 +11,7 @@ package object Partition {
 
   /* Types de notes */
   sealed trait Donnee
-  case object Silence extends Donnee
+  case object Silence                         extends Donnee
   final case class Note(d: Duree, h: hauteur) extends Donnee
 
   /* Segment de partition */
@@ -19,7 +19,7 @@ package object Partition {
 
   /* Types de répétitions */
   sealed trait Repetition
-  case object AdLib extends Repetition
+  case object AdLib           extends Repetition
   final case class Nb(i: Int) extends Repetition
 
   /* Partition */

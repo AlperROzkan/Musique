@@ -17,8 +17,8 @@ package object Action {
   /* Executer une instruction */
   val perform_action: Audio => Instruction => Unit = s => a => a match {
     case Wait(d) => Thread.sleep(d)
-    case Event(i, h, On)  => (channel_of_instrument(s)(i)).noteOn(h, 600)
-    case Event(i, h, Off) => (channel_of_instrument(s)(i)).noteOff(h, 600)
+    case Event(i, h, On)  => channel_of_instrument(s)(i).noteOn(h, 600)
+    case Event(i, h, Off) => channel_of_instrument(s)(i).noteOff(h, 600)
   }
 
 }
