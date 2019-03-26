@@ -14,8 +14,9 @@ object Musique {
     seg match {
       case Nil                  => Stream.Empty
       case Silence::t           => Wait(tempo) #:: seg_to_seq(inst)(tempo)(t)
-      case Note(Croche, h):: t  => Event(inst, h, On) #:: Wait(tempo) #:: Event(inst, h, Off) #:: seg_to_seq(inst)(tempo)(t)
-      case Note(Noire, h)::t    => Event(inst, h, On) #:: Wait(tempo * 2) #:: Event(inst, h, Off) #:: seg_to_seq(inst)(tempo)(t)
+      case Note(Croche, h, p):: t  => Event(inst, h, On(p)) #:: Wait(tempo) #:: Event(inst, h, Off) #:: seg_to_seq(inst)(tempo)(t)
+      case Note(Noire, h, p)::t    => Event(inst, h, On(p)) #:: Wait(tempo * 2) #:: Event(inst, h, Off) #:: seg_to_seq(inst)(tempo)(t)
+
     }
   }
 
@@ -25,7 +26,7 @@ object Musique {
   val part_to_seq: Instrument => Int => partition => sequence = inst => tempo => part => {
     part match {
       case Nil             => Stream.Empty
-      case (Nb(l), seg)::t => seg_to_seq(inst)(tempo)(seg) #::: part_to_seq(inst)(tempo)(t)
+      case (Nb(1), seg)::t => seg_to_seq(inst)(tempo)(seg) #::: part_to_seq(inst)(tempo)(t)
       case (Nb(n), seg)::t => seg_to_seq(inst)(tempo)(seg) #::: part_to_seq(inst)(tempo)((Nb(n-1), seg)::t)
       case (AdLib, seg)::t => seg_to_seq(inst)(tempo)(seg) #::: part_to_seq(inst)(tempo)((AdLib, seg)::t)
 
@@ -50,8 +51,6 @@ object Musique {
   }
 
   def main(args: Array[String]): Unit = {
-    //play(sortie)(seg_to_seq(Tubular)(100)(monsegment))
-    perform_action(sortie)(Event(Piano,70,On))
-    play(sortie)(part_to_seq(Piano)(100)(partitionRepeatFast))
+    play(sortie)(part_to_seq(Piano)(150)(mapartition))
   }
 }

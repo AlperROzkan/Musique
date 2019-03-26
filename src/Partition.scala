@@ -9,10 +9,16 @@ package object Partition {
   case object Noire extends Duree
   case object Croche extends Duree
 
+  /* Puissance d'une note */
+  sealed trait Puissance
+  case object Fort extends Puissance
+  case object Moyen extends Puissance
+  case object Faible extends Puissance
+
   /* Types de notes */
   sealed trait Donnee
   case object Silence                         extends Donnee
-  final case class Note(d: Duree, h: hauteur) extends Donnee
+  final case class Note(d: Duree, h: hauteur, p: Puissance) extends Donnee
 
   /* Segment de partition */
   type segment = List[Donnee]
@@ -24,6 +30,5 @@ package object Partition {
 
   /* Partition */
   type partition = List[(Repetition, segment)]
-
 
 }
