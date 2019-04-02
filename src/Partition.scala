@@ -20,6 +20,8 @@ package object Partition {
   case object Silence                         extends Donnee
   final case class Note(d: Duree, h: hauteur, p: Puissance) extends Donnee
 
+  final case class Tempo(i : Int)
+
   /* Segment de partition */
   type segment = List[Donnee]
 

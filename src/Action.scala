@@ -15,7 +15,6 @@ package object Action {
   final case class Event(i: Instrument, h: hauteur, s: Switch) extends Instruction
   final case class Wait(d: date)                               extends Instruction
 
-
   /* Executer une instruction */
   val perform_action: Audio => Instruction => Unit = s => a => a match {
     case Wait(d) => Thread.sleep(d)
